@@ -1,4 +1,4 @@
-function peak_shift = FLASH_generate_3drm(rf_pos, savepath, purerange, stf, width, bar_width,layer_thickness)
+function peak_shift = FLASH_generate_3drm(rf_pos, savepath, purerange, stf, width, bar_width,layer_thickness,exp_rf_pos)
     disp('generating 3drm...')
     posOfRF = rf_pos;
     
@@ -53,7 +53,8 @@ function peak_shift = FLASH_generate_3drm(rf_pos, savepath, purerange, stf, widt
                            0         bar_width  peak_shift(n)-0.0001];
         vertices{length(ix)+1} = vertices{length(ix)+1} + [posOfRF(1,n),posOfRF(3,n),0] - [bar_width/2, bar_width/2, 0];
     
-    
+
+
         for i = 1:length(vertices)
             current_vertices = vertices{i};
         
@@ -71,6 +72,39 @@ function peak_shift = FLASH_generate_3drm(rf_pos, savepath, purerange, stf, widt
         end
     end
     
+
+
+    % add wall
+    bar_width_fix = bar_width;
+    for k = 1:length(exp_rf_pos)
+            vertices{k} = [0                0              0;
+                           bar_width_fix    0              0;
+                           bar_width_fix    bar_width_fix  0;
+                           0                bar_width_fix  0;
+                           0                0              24;
+                           bar_width_fix    0              24;
+                           bar_width_fix    bar_width_fix  24;
+                           0                bar_width_fix  24];
+        vertices{k} = vertices{k} + [exp_rf_pos(1,k),exp_rf_pos(3,k),0] - [bar_width_fix/2, bar_width_fix/2, 0];
+    end
+    
+    for i = 1:length(vertices)
+        current_vertices = vertices{i};
+    
+        for j = 1:size(faces, 1)
+            fprintf(fid, 'facet normal %d %d %d\n',facet_normal{j});
+            fprintf(fid, '  outer loop\n');
+            for k = 1:3
+                vert = current_vertices(faces(j, k), :);
+                fprintf(fid, '    vertex %f %f %f\n', vert);
+            end
+            fprintf(fid, '  endloop\n');
+            fprintf(fid, 'endfacet\n');
+        end
+        count = count + 1;
+    end
+
+
     
     fprintf(fid, 'endsolid cuboid\n');
     fclose(fid);
