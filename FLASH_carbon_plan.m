@@ -15,7 +15,7 @@ pln.propOpt.bioOptimization = 'none';
 pln.numOfFractions        = 30;
 pln.propStf.gantryAngles  = 0;
 pln.propStf.couchAngles   = 0;
-pln.propStf.bixelWidth    = 3;
+pln.propStf.bixelWidth    = 4;
 pln.propStf.numOfBeams    = numel(pln.propStf.gantryAngles);
 pln.propStf.isoCenter     = ones(pln.propStf.numOfBeams,1) * matRad_getIsoCenter(cst,ct,0);
 pln.propOpt.runDAO        = 0;
@@ -29,13 +29,18 @@ stf = matRad_generateStf(ct,cst,pln);
 exp1_posOfRF = [stf.ray.rayPos_bev];
 exp1_posOfRF = reshape(exp1_posOfRF,[3,length(exp1_posOfRF)/3]);
 
-
-
+rounds = 0.1;
 %% optimize rf shape
-[width, rf_pos, bar_width, stf,layer_thickness]= FLASH_optimize_SOBP(pln, ct, cst,machine);
+[width, rf_pos, stf]= FLASH_optimize_SOBP(pln, ct, cst,machine, rounds);
+
+exp_rf_pos = zeros(3,10);
+exp_rf_pos(:,1:5) = rf_pos(:,1:5);
+exp_rf_pos(:,6:10) = rf_pos(:,21:25);
+exp_rf_pos(1,1:5) = exp_rf_pos(1,1:5) - pln.propStf.bixelWidth;
+exp_rf_pos(1,6:10) = exp_rf_pos(1,6:10) + pln.propStf.bixelWidth;
 
 %% generate 3drm
-peak_shift = FLASH_generate_3drm(rf_pos, savepath, purerange, stf, width, bar_width,layer_thickness);
+peak_shift = FLASH_generate_3drm(rf_pos, savepath, purerange, stf, width, pln.propStf.bixelWidth ,1, exp_rf_pos); % bar_width and layer_thickness
 
 
 
